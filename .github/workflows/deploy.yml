@@ -1,0 +1,27 @@
+name: Deploy Applications
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_apps:
+    name: Deploy Applications
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Determine Changed Apps
+        id: changed_apps
+        run: |
+          changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs -I{} dirname {} | grep -E '^apps/[^/]+/iac' | cut -d/ -f2 | uniq)
+          echo "::set-output name=changed_apps::${changed_dirs}"
+
+      - name: Deploy Changed Apps
+        run: |
+          changed_apps="${{ steps.changed_apps.outputs.changed_apps }}"
+          for app_dir in $changed_apps; do
+            echo "Deploying $app_dir"
+          done
